@@ -1,0 +1,1546 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Система Кассовых Книг - Google Sheets</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            background-attachment: fixed;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .login-section {
+            padding: 50px;
+            text-align: center;
+            background: #f8f9fa;
+        }
+
+        .login-form {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .login-form h2 {
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 8px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn:active {
+            transform: translateY(-1px) scale(0.98);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .main-content {
+            display: none;
+            padding: 30px;
+        }
+
+        .user-info {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .user-info h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .store-selector {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .store-selector label {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .store-selector select {
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            min-width: 200px;
+        }
+
+        .cash-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            position: relative;
+            table-layout: fixed;
+            border: 1px solid rgba(102, 126, 234, 0.1);
+        }
+
+        .cash-table td:nth-child(1) { width: 8%; }  /* Дата */
+        .cash-table td:nth-child(2) { width: 10%; } /* Остаток на начало */
+        .cash-table td:nth-child(3) { width: 8%; }  /* Приход */
+        .cash-table td:nth-child(4) { width: 15%; } /* Источник прихода */
+        .cash-table td:nth-child(5) { width: 8%; }  /* Расход */
+        .cash-table td:nth-child(6) { width: 15%; } /* Описание расхода */
+        .cash-table td:nth-child(7) { width: 8%; }  /* Снятие */
+        .cash-table td:nth-child(8) { width: 10%; } /* Фамилия снимающего */
+        .cash-table td:nth-child(9) { width: 10%; } /* Остаток на конец */
+
+        .cash-table thead {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .cash-table thead th {
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 10 !important;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%) !important;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+        }
+
+        .cash-table thead {
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 10 !important;
+        }
+
+        .cash-table th {
+            color: white;
+            padding: 15px 10px;
+            text-align: center;
+            font-weight: 600;
+            border: 1px solid #34495e;
+        }
+
+        .cash-table td {
+            padding: 12px 10px;
+            border: 1px solid #e9ecef;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .cash-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .cash-table tr:hover {
+            background: linear-gradient(90deg, #e3f2fd 0%, #f0f8ff 100%);
+            transform: scale(1.001);
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+        }
+
+        .input-cell {
+            padding: 5px;
+            border: none;
+            background: transparent;
+            width: 100%;
+            text-align: center;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 20px;
+            max-height: 100px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .input-cell:focus {
+            outline: none;
+            background: linear-gradient(135deg, #fff3cd 0%, #fff8dc 100%);
+            border-radius: 8px;
+            overflow: visible;
+            z-index: 100;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+            border: 2px solid #ffc107;
+            transform: scale(1.02);
+        }
+
+        .input-cell:disabled {
+            background: #f8f9fa;
+            color: #6c757d;
+        }
+
+        /* Специальные стили для текстовых полей */
+        .text-input-cell {
+            text-align: left;
+            padding: 8px;
+            font-size: 13px;
+            line-height: 1.3;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            min-height: 30px;
+            max-height: 80px;
+        }
+
+        .text-input-cell:focus {
+            min-height: 60px;
+            max-height: 120px;
+        }
+
+        /* Tooltip для длинного текста */
+        .cell-tooltip {
+            position: relative;
+            cursor: help;
+        }
+
+        .cell-tooltip:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-width: 300px;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .balance-cell {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .positive {
+            color: #28a745;
+        }
+
+        .negative {
+            color: #dc3545;
+        }
+
+        .summary {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 5px solid #667eea;
+        }
+
+        .summary h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .summary-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .summary-item h4 {
+            color: #6c757d;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .summary-item .value {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .admin-panel {
+            background: #fff3cd;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border-left: 5px solid #ffc107;
+        }
+
+        .admin-panel h3 {
+            color: #856404;
+            margin-bottom: 15px;
+        }
+
+        .admin-controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .today-row {
+            background: #d4edda !important;
+            border-left: 5px solid #28a745;
+        }
+
+        .today-row input {
+            background: #d4edda !important;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 15px;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .sync-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            z-index: 1000;
+            opacity: 0;
+            transition: all 0.4s ease;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sync-success {
+            background: #28a745;
+        }
+
+        .sync-error {
+            background: #dc3545;
+        }
+
+        @media (max-width: 768px) {
+            .store-selector {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .cash-table {
+                font-size: 12px;
+            }
+            
+            .cash-table th, .cash-table td {
+                padding: 8px 5px;
+            }
+            
+            .text-input-cell {
+                font-size: 11px;
+                min-height: 25px;
+                max-height: 60px;
+            }
+            
+            .text-input-cell:focus {
+                min-height: 40px;
+                max-height: 80px;
+            }
+            
+            .user-info {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .table-headers {
+                grid-template-columns: 0.7fr 0.8fr 0.7fr 1.2fr 0.7fr 1.2fr 0.7fr 0.8fr 0.8fr !important;
+            }
+
+            .cash-table td:nth-child(1) { width: 7%; }
+            .cash-table td:nth-child(2) { width: 8%; }
+            .cash-table td:nth-child(3) { width: 7%; }
+            .cash-table td:nth-child(4) { width: 12%; }
+            .cash-table td:nth-child(5) { width: 7%; }
+            .cash-table td:nth-child(6) { width: 12%; }
+            .cash-table td:nth-child(7) { width: 7%; }
+            .cash-table td:nth-child(8) { width: 8%; }
+            .cash-table td:nth-child(9) { width: 8%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💰 Кассовая книга</h1>
+            <p>Управление наличными средствами салонов</p>
+        </div>
+
+        <!-- Форма входа -->
+        <div class="login-section" id="loginSection">
+            <div class="login-form">
+                <h2>🔐 Вход в систему</h2>
+                <div class="form-group">
+                    <label>Роль:</label>
+                    <select id="roleSelect">
+                        <option value="employee">Сотрудник магазина</option>
+                        <option value="manager">Менеджер</option>
+                        <option value="admin">Администратор</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Магазин:</label>
+                    <select id="storeSelect">
+                        <option value="">Выберите магазин</option>
+                        <option value="store1">ЦДМ</option>
+                        <option value="store2">Мегга-мебель</option>
+                        <option value="store3">Савиново</option>
+                        <option value="store4">MZ Life</option>
+                        <option value="store5">ТЦ Мебель</option>
+                        <option value="store6">Дисконт-центр</option>
+                        <option value="store7">Аструм</option>
+                        <option value="store8">Радуга</option>
+                        <option value="store9">ВДНХ</option>
+                        <option value="store10">Мебель-Сити 2</option>
+                        <option value="store11">Румер</option>
+                        <option value="store12">Империя</option>
+                        <option value="store13">Три Кита</option>
+                        <option value="store14">Фэмели Рум</option>
+                        <option value="store15">Румянцево</option>
+                        <option value="store16">Твин Стор</option>
+                        <option value="store17">Крокус</option>
+                        <option value="store18">Мега Молл</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Имя пользователя:</label>
+                    <input type="text" id="username" placeholder="Введите имя">
+                </div>
+                <div class="form-group">
+                    <label>Пароль:</label>
+                    <input type="password" id="password" placeholder="Введите пароль">
+                </div>
+                <button class="btn" onclick="login()">Войти</button>
+            </div>
+        </div>
+
+        <!-- Основной контент -->
+        <div class="main-content" id="mainContent">
+            <div class="user-info">
+                <div>
+                    <h3>👤 Пользователь: <span id="userDisplay"></span></h3>
+                    <p>🏪 Магазин: <span id="storeDisplay"></span></p>
+                    <p>📅 Дата: <span id="currentDate"></span></p>
+                </div>
+                <div>
+                    <button class="btn btn-secondary" onclick="logout()">Выйти</button>
+                    <button class="btn btn-success" id="exportBtn" onclick="exportToExcel()" style="display: none;">📊 Экспорт</button>
+                    <button class="btn" id="syncBtn" onclick="syncData()">🔄 Синхронизация</button>
+                </div>
+            </div>
+
+            <!-- Панель администратора -->
+            <div class="admin-panel" id="adminPanel" style="display: none;">
+                <h3>⚙️ Панель администратора</h3>
+                <div class="admin-controls">
+                    <button class="btn" onclick="addNewStore()">➕ Добавить магазин</button>
+                    <button class="btn" onclick="viewAllStores()">👁️ Просмотр всех магазинов</button>
+                    <button class="btn" onclick="generateReport()">📈 Общий отчет</button>
+                    <button class="btn btn-danger" onclick="clearAllData()" style="display: none;">🗑️ Очистить все данные</button>
+                </div>
+            </div>
+
+            <!-- Выбор магазина (для менеджера и админа) -->
+            <div class="store-selector" id="storeSelector" style="display: none;">
+                <label>Выберите магазин для просмотра:</label>
+                <select id="managerStoreSelect" onchange="loadStoreData()">
+                    <option value="">Выберите магазин</option>
+                    <option value="store1">ЦДМ</option>
+                    <option value="store2">Мегга-мебель</option>
+                    <option value="store3">Савиново</option>
+                    <option value="store4">MZ Life</option>
+                    <option value="store5">ТЦ Мебель</option>
+                    <option value="store6">Дисконт-центр</option>
+                    <option value="store7">Аструм</option>
+                    <option value="store8">Радуга</option>
+                    <option value="store9">ВДНХ</option>
+                    <option value="store10">Мебель-Сити 2</option>
+                    <option value="store11">Румер</option>
+                    <option value="store12">Империя</option>
+                    <option value="store13">Три Кита</option>
+                    <option value="store14">Фэмели Рум</option>
+                    <option value="store15">Румянцево</option>
+                    <option value="store16">Твин Стор</option>
+                    <option value="store17">Крокус</option>
+                    <option value="store18">Мега Молл</option>
+                </select>
+            </div>
+
+            <div id="cashBookContent" style="max-height: 500px; overflow-y: auto; border: 1px solid #e9ecef; border-radius: 10px; position: relative;">
+                <div class="loading">Загрузка данных...</div>
+            </div>
+
+            <div class="summary" id="summary">
+                <!-- Сводка будет добавлена динамически -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Статус синхронизации -->
+    <div id="syncStatus" class="sync-status"></div>
+
+    <script>
+        let currentUser = null;
+        let currentStore = null;
+        let currentRole = null;
+        let allStoresData = {};
+        let isSyncing = false;
+        
+        // Загрузить данные из localStorage при инициализации
+        const savedData = localStorage.getItem('cashSystemData');
+        if (savedData) {
+            try {
+                allStoresData = JSON.parse(savedData);
+                console.log('Данные загружены из localStorage:', allStoresData);
+            } catch (error) {
+                console.error('Ошибка загрузки данных из localStorage:', error);
+            }
+        }
+
+        // URL Google Apps Script
+        const GOOGLE_SCRIPT_URL = 'ВАШ_НОВЫЙ_URL_ОТ_РАЗВЕРТЫВАНИЯ';
+
+        // Инициализация данных для всех салонов
+        function initializeStoresData() {
+            const stores = [
+                'store1', 'store2', 'store3', 'store4', 'store5', 'store6', 'store7', 'store8',
+                'store9', 'store10', 'store11', 'store12', 'store13', 'store14', 'store15', 'store16', 'store17', 'store18'
+            ];
+            
+            stores.forEach(store => {
+                if (!allStoresData[store]) {
+                    allStoresData[store] = {
+                        initialBalance: 0,
+                        dailyData: {}
+                    };
+                }
+            });
+        }
+
+        function login() {
+            const role = document.getElementById('roleSelect').value;
+            const store = document.getElementById('storeSelect').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (!username || !password) {
+                alert('Пожалуйста, заполните все поля');
+                return;
+            }
+
+            if (role === 'employee' && !store) {
+                alert('Сотрудник должен выбрать магазин');
+                return;
+            }
+
+            // Простая проверка паролей
+            const validPasswords = {
+                'employee': '123456',
+                'manager': 'kirov1997',
+                'admin': 'aarbujhm'
+            };
+            
+            // Индивидуальные пароли для каждого салона (для сотрудников) - 6 случайных цифр
+            const storePasswords = {
+                'store1': '847392',
+                'store2': '156847',
+                'store3': '293847',
+                'store4': '456123',
+                'store5': '789456',
+                'store6': '321654',
+                'store7': '987123',
+                'store8': '654789',
+                'store9': '147258',
+                'store10': '369147',
+                'store11': '852963',
+                'store12': '741369',
+                'store13': '258147',
+                'store14': '963852',
+                'store15': '147963',
+                'store16': '258741',
+                'store17': '369258',
+                'store18': '741963'
+            };
+
+            // Проверка пароля в зависимости от роли
+            let isValidPassword = false;
+            
+            if (role === 'employee') {
+                // Для сотрудников проверяем пароль конкретного салона
+                isValidPassword = password === storePasswords[store];
+            } else {
+                // Для менеджера и админа проверяем общие пароли
+                isValidPassword = password === validPasswords[role];
+            }
+            
+            if (!isValidPassword) {
+                if (role === 'employee') {
+                    alert(`Неверный пароль для салона "${getStoreName(store)}"`);
+                } else {
+                    alert('Неверный пароль');
+                }
+                return;
+            }
+
+            currentUser = username;
+            currentRole = role;
+            currentStore = store;
+
+            // Сохранить в localStorage
+            localStorage.setItem('currentUser', JSON.stringify({
+                username: currentUser,
+                role: currentRole,
+                store: currentStore
+            }));
+
+            showMainContent();
+        }
+
+        function showMainContent() {
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+
+            // Обновить информацию о пользователе
+            document.getElementById('userDisplay').textContent = currentUser;
+            document.getElementById('storeDisplay').textContent = getStoreName(currentStore);
+            document.getElementById('currentDate').textContent = new Date().toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+
+            // Отладочная информация
+            console.log('Пользователь вошел:', {
+                user: currentUser,
+                role: currentRole,
+                store: currentStore
+            });
+
+            // Показать панель администратора
+            if (currentRole === 'admin') {
+                document.getElementById('adminPanel').style.display = 'block';
+            }
+
+            // Показать селектор магазина для менеджера и админа
+            if (currentRole === 'manager' || currentRole === 'admin') {
+                document.getElementById('storeSelector').style.display = 'flex';
+            }
+
+            // Показать кнопку экспорта только для менеджера и админа
+            if (currentRole === 'manager' || currentRole === 'admin') {
+                document.getElementById('exportBtn').style.display = 'inline-block';
+                console.log('Кнопка экспорта показана для роли:', currentRole);
+            } else {
+                // Скрыть кнопку экспорта для сотрудников
+                document.getElementById('exportBtn').style.display = 'none';
+                console.log('Кнопка экспорта скрыта для роли:', currentRole);
+            }
+            
+            // Управление видимостью кнопки "Очистить все данные"
+            const clearDataBtn = document.querySelector('button[onclick="clearAllData()"]');
+            if (clearDataBtn) {
+                if (currentRole === 'admin') {
+                    clearDataBtn.style.display = 'inline-block';
+                    console.log('Кнопка "Очистить все данные" показана для администратора');
+                } else {
+                    clearDataBtn.style.display = 'none';
+                    console.log('Кнопка "Очистить все данные" скрыта для роли:', currentRole);
+                }
+            } else {
+                console.log('Кнопка "Очистить все данные" не найдена');
+            }
+
+            // Загрузить данные магазина
+            if (currentRole === 'employee') {
+                loadStoreData(currentStore);
+            } else if (currentRole === 'manager' || currentRole === 'admin') {
+                // Для менеджера и админа загружаем данные при выборе салона
+                // Данные будут загружены при выборе салона в селекторе
+                console.log('Менеджер/админ вошел. Данные будут загружены при выборе салона.');
+            }
+        }
+
+        function getStoreName(storeId) {
+            const storeNames = {
+                'store1': 'ЦДМ',
+                'store2': 'Мегга-мебель',
+                'store3': 'Савиново',
+                'store4': 'MZ Life',
+                'store5': 'ТЦ Мебель',
+                'store6': 'Дисконт-центр',
+                'store7': 'Аструм',
+                'store8': 'Радуга',
+                'store9': 'ВДНХ',
+                'store10': 'Мебель-Сити 2',
+                'store11': 'Румер',
+                'store12': 'Империя',
+                'store13': 'Три Кита',
+                'store14': 'Фэмели Рум',
+                'store15': 'Румянцево',
+                'store16': 'Твин Стор',
+                'store17': 'Крокус',
+                'store18': 'Мега Молл'
+            };
+            return storeNames[storeId] || storeId;
+        }
+
+        async function loadStoreData(storeId = null) {
+            const targetStore = storeId || document.getElementById('managerStoreSelect').value;
+            if (!targetStore) return;
+
+            currentStore = targetStore;
+            document.getElementById('storeDisplay').textContent = getStoreName(currentStore);
+
+            console.log(`Загрузка данных для салона: ${currentStore}, роль: ${currentRole}`);
+
+            // Загрузить данные из Google Sheets
+            await loadDataFromGoogleSheets();
+            
+            createCashBookTable();
+            updateSummary();
+        }
+
+        async function loadDataFromGoogleSheets() {
+            console.log('Попытка загрузки данных из Google Sheets...');
+            console.log('URL:', GOOGLE_SCRIPT_URL);
+            console.log('Текущий салон:', currentStore);
+            
+            // Проверяем, не является ли URL placeholder
+            if (GOOGLE_SCRIPT_URL === 'ВАШ_НОВЫЙ_URL_ОТ_РАЗВЕРТЫВАНИЯ') {
+                console.log('URL не настроен, используем localStorage');
+                loadFromLocalStorage();
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getData&store=${currentStore}`);
+                console.log('Ответ получен:', response);
+                console.log('Статус ответа:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('Данные получены:', data);
+                
+                if (data.success) {
+                    allStoresData[currentStore] = data.data;
+                    console.log('Данные загружены из Google Sheets:', data.data);
+                } else {
+                    console.error('Ошибка загрузки данных:', data.error);
+                    loadFromLocalStorage();
+                }
+            } catch (error) {
+                console.error('Ошибка соединения с Google Sheets:', error);
+                console.error('Полная ошибка:', error.message);
+                loadFromLocalStorage();
+            }
+        }
+
+        function loadFromLocalStorage() {
+            // Использовать локальные данные как fallback
+            if (!allStoresData[currentStore]) {
+                allStoresData[currentStore] = {
+                    initialBalance: 0,
+                    dailyData: {}
+                };
+            }
+            console.log('Данные загружены из localStorage:', allStoresData[currentStore]);
+        }
+
+        async function saveDataToGoogleSheets() {
+            if (isSyncing) return;
+            
+            isSyncing = true;
+            const syncBtn = document.getElementById('syncBtn');
+            syncBtn.disabled = true;
+            syncBtn.textContent = '🔄 Синхронизация...';
+
+            // Проверяем, не является ли URL placeholder
+            if (GOOGLE_SCRIPT_URL === 'ВАШ_НОВЫЙ_URL_ОТ_РАЗВЕРТЫВАНИЯ') {
+                console.log('URL не настроен, сохраняем в localStorage');
+                localStorage.setItem('cashSystemData', JSON.stringify(allStoresData));
+                showSyncStatus('Данные сохранены локально', 'success');
+                isSyncing = false;
+                syncBtn.disabled = false;
+                syncBtn.textContent = '🔄 Синхронизация';
+                return;
+            }
+
+            try {
+                const requestBody = {
+                    action: 'saveData',
+                    store: currentStore,
+                    data: allStoresData[currentStore]
+                };
+                
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showSyncStatus('Данные сохранены в Google Sheets!', 'success');
+                    // Также сохранить в localStorage как резервную копию
+                    localStorage.setItem('cashSystemData', JSON.stringify(allStoresData));
+                } else {
+                    showSyncStatus('Ошибка сохранения: ' + result.error, 'error');
+                    // Сохранить в localStorage как fallback
+                    localStorage.setItem('cashSystemData', JSON.stringify(allStoresData));
+                }
+            } catch (error) {
+                console.error('Ошибка сохранения:', error);
+                showSyncStatus('Ошибка соединения с Google Sheets', 'error');
+                // Сохранить в localStorage как fallback
+                localStorage.setItem('cashSystemData', JSON.stringify(allStoresData));
+            } finally {
+                isSyncing = false;
+                syncBtn.disabled = false;
+                syncBtn.textContent = '🔄 Синхронизация';
+            }
+        }
+
+        function showSyncStatus(message, type) {
+            const status = document.getElementById('syncStatus');
+            status.textContent = message;
+            status.className = `sync-status sync-${type}`;
+            status.style.opacity = '1';
+            
+            setTimeout(() => {
+                status.style.opacity = '0';
+            }, 3000);
+        }
+
+        function syncData() {
+            saveDataToGoogleSheets();
+        }
+
+        function createCashBookTable() {
+            const content = document.getElementById('cashBookContent');
+            const today = new Date().toISOString().split('T')[0];
+            const storeData = allStoresData[currentStore];
+            
+            // Определить период в зависимости от роли
+            let daysToShow = 30; // по умолчанию
+            if (currentRole === 'manager' || currentRole === 'admin') {
+                daysToShow = 180; // полгода для менеджера и админа
+            } else if (currentRole === 'employee') {
+                daysToShow = 60; // 2 месяца для сотрудников
+            }
+            
+            // Получить данные за нужный период
+            const dateRange = [];
+            for (let i = daysToShow - 1; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                const dateStr = date.toISOString().split('T')[0];
+                dateRange.push(dateStr);
+            }
+            
+            // Фильтровать даты - показывать только с 27.08.2025
+            const startDate = new Date('2025-08-27');
+            const filteredDateRange = dateRange.filter(date => {
+                const dateObj = new Date(date);
+                return dateObj >= startDate;
+            });
+            
+            console.log('Отладка дат:', {
+                totalDates: dateRange.length,
+                filteredDates: filteredDateRange.length,
+                startDate: startDate.toISOString(),
+                firstDate: dateRange[0],
+                lastDate: dateRange[dateRange.length - 1]
+            });
+
+            let html = `
+                <h2 style="color: #2c3e50; margin-bottom: 20px;">Кассовая книга "${getStoreName(currentStore)}" (${new Date().toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' })})</h2>
+                
+                <!-- Зафиксированные заголовки таблицы -->
+                <div class="table-headers" style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white; padding: 15px 10px; border-radius: 10px 10px 0 0; display: grid; grid-template-columns: 0.8fr 1fr 0.8fr 1.5fr 0.8fr 1.5fr 0.8fr 1fr 1fr; gap: 5px; font-weight: 600; text-align: center; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <div>Дата</div>
+                    <div>Остаток на начало дня</div>
+                    <div>Приход</div>
+                    <div>Источник прихода<br><small>(наведите для полного текста)</small></div>
+                    <div>Расход</div>
+                    <div>Описание расхода<br><small>(наведите для полного текста)</small></div>
+                    <div>Снятие</div>
+                    <div>Фамилия снимающего</div>
+                    <div>Остаток на конец дня</div>
+                </div>
+                
+                <!-- Таблица с данными -->
+                <div style="max-height: 400px; overflow-y: auto; border: 1px solid #e9ecef; border-top: none; border-radius: 0 0 10px 10px;">
+                    <table class="cash-table" style="width: 100%; border-collapse: collapse; margin: 0;">
+                        <tbody>
+            `;
+
+            filteredDateRange.forEach((date, index) => {
+                const isToday = date === today;
+                const dayData = storeData.dailyData[date] || {};
+                const canEdit = (currentRole === 'employee' && isToday) || 
+                               (currentRole === 'manager') || 
+                               (currentRole === 'admin');
+
+                // Отладочная информация
+                console.log(`Дата: ${date}, Роль: ${currentRole}, Может редактировать: ${canEdit}`);
+
+                html += createTableRow(date, dayData, index, isToday, canEdit);
+            });
+
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            content.innerHTML = html;
+            addEventListeners();
+            
+            // Автоматически рассчитать начальные остатки для всех дней
+            calculateInitialBalances(filteredDateRange);
+        }
+
+        function calculateInitialBalances(dateRange) {
+            let previousEndBalance = allStoresData[currentStore].initialBalance || 0;
+            
+            dateRange.forEach((date, index) => {
+                const dayData = allStoresData[currentStore].dailyData[date] || {};
+                
+                // Если нет начального остатка, установить из предыдущего дня
+                if (!dayData.startBalance && index > 0) {
+                    const previousDate = dateRange[index - 1];
+                    const previousDayData = allStoresData[currentStore].dailyData[previousDate] || {};
+                    const previousEnd = parseFloat(previousDayData.endBalance) || previousEndBalance;
+                    
+                    // Обновить данные
+                    if (!allStoresData[currentStore].dailyData[date]) {
+                        allStoresData[currentStore].dailyData[date] = {};
+                    }
+                    allStoresData[currentStore].dailyData[date].startBalance = previousEnd.toFixed(2);
+                    
+                    // Обновить отображение
+                    const rowElement = document.querySelector(`input[value="${date}"]`);
+                    if (rowElement) {
+                        const startBalanceCell = rowElement.closest('tr').querySelector('td:nth-child(2) input');
+                        if (startBalanceCell) {
+                            startBalanceCell.value = previousEnd.toFixed(2);
+                        }
+                    }
+                    
+                    previousEndBalance = previousEnd;
+                } else if (dayData.startBalance) {
+                    previousEndBalance = parseFloat(dayData.endBalance) || parseFloat(dayData.startBalance);
+                }
+            });
+        }
+
+        function createTableRow(date, dayData, rowIndex, isToday, canEdit) {
+            const startBalance = dayData.startBalance || '';
+            const income = dayData.income || '';
+            const incomeSource = dayData.incomeSource || '';
+            const expense = dayData.expense || '';
+            const expenseDesc = dayData.expenseDesc || '';
+            const withdrawal = dayData.withdrawal || '';
+            const withdrawer = dayData.withdrawer || '';
+            const endBalance = dayData.endBalance || '';
+
+            const rowClass = isToday ? 'today-row' : '';
+            const disabledAttr = canEdit ? '' : 'disabled';
+            
+            // Отладочная информация для создания строки
+            console.log(`Создание строки для ${date}: canEdit=${canEdit}, disabledAttr="${disabledAttr}"`);
+
+            return `
+                <tr class="${rowClass}">
+                    <td>
+                        <input type="date" class="input-cell" value="${date}" 
+                               ${disabledAttr} onchange="updateCell('${date}', 'date', this.value)">
+                    </td>
+                    <td class="balance-cell">
+                        <input type="number" class="input-cell" value="${startBalance}" step="0.01"
+                               ${disabledAttr} onchange="updateCell('${date}', 'startBalance', this.value)"
+                               onblur="calculateEndBalance('${date}')">
+                    </td>
+                    <td>
+                        <input type="number" class="input-cell" value="${income}" step="0.01"
+                               ${disabledAttr} onchange="updateCell('${date}', 'income', this.value)"
+                               onblur="calculateEndBalance('${date}')">
+                    </td>
+                    <td class="cell-tooltip" data-tooltip="${incomeSource.replace(/"/g, '&quot;')}">
+                        <textarea class="input-cell text-input-cell" 
+                                  ${disabledAttr} 
+                                  onchange="updateCell('${date}', 'incomeSource', this.value)"
+                                  oninput="this.parentElement.setAttribute('data-tooltip', this.value.replace(/\"/g, '&quot;'))"
+                                  placeholder="Источник дохода...">${incomeSource}</textarea>
+                    </td>
+                    <td>
+                        <input type="number" class="input-cell" value="${expense}" step="0.01"
+                               ${disabledAttr} onchange="updateCell('${date}', 'expense', this.value)"
+                               onblur="calculateEndBalance('${date}')">
+                    </td>
+                    <td class="cell-tooltip" data-tooltip="${expenseDesc.replace(/"/g, '&quot;')}">
+                        <textarea class="input-cell text-input-cell" 
+                                  ${disabledAttr} 
+                                  onchange="updateCell('${date}', 'expenseDesc', this.value)"
+                                  oninput="this.parentElement.setAttribute('data-tooltip', this.value.replace(/\"/g, '&quot;'))"
+                                  placeholder="Описание расхода...">${expenseDesc}</textarea>
+                    </td>
+                    <td>
+                        <input type="number" class="input-cell" value="${withdrawal}" step="0.01"
+                               ${disabledAttr} onchange="updateCell('${date}', 'withdrawal', this.value)"
+                               onblur="calculateEndBalance('${date}')">
+                    </td>
+                    <td>
+                        <input type="text" class="input-cell" value="${withdrawer}"
+                               ${disabledAttr} onchange="updateCell('${date}', 'withdrawer', this.value)">
+                    </td>
+                    <td class="balance-cell">
+                        <input type="number" class="input-cell" value="${endBalance}" step="0.01" readonly
+                               style="background: #f8f9fa; font-weight: 600;">
+                    </td>
+                </tr>
+            `;
+        }
+
+        function updateCell(date, field, value) {
+            if (!allStoresData[currentStore].dailyData[date]) {
+                allStoresData[currentStore].dailyData[date] = {};
+            }
+            
+            allStoresData[currentStore].dailyData[date][field] = value;
+            
+            // Обновить сводку при изменении данных
+            updateSummary();
+            
+            // Автоматически сохранить в Google Sheets
+            setTimeout(() => {
+                saveDataToGoogleSheets();
+            }, 1000); // Задержка 1 секунда для избежания частых запросов
+        }
+
+        function calculateEndBalance(date) {
+            const dayData = allStoresData[currentStore].dailyData[date] || {};
+            const startBalance = parseFloat(dayData.startBalance) || 0;
+            const income = parseFloat(dayData.income) || 0;
+            const expense = parseFloat(dayData.expense) || 0;
+            const withdrawal = parseFloat(dayData.withdrawal) || 0;
+            
+            const endBalance = startBalance + income - expense - withdrawal;
+            
+            updateCell(date, 'endBalance', endBalance.toFixed(2));
+            
+            // Обновить отображение
+            const rowElement = document.querySelector(`input[value="${date}"]`).closest('tr');
+            if (rowElement) {
+                const endBalanceCell = rowElement.querySelector('td:last-child input');
+                if (endBalanceCell) {
+                    endBalanceCell.value = endBalance.toFixed(2);
+                    endBalanceCell.style.color = endBalance >= 0 ? '#28a745' : '#dc3545';
+                }
+            }
+            
+            // Автоматически перенести остаток на следующий день
+            updateNextDayStartBalance(date, endBalance);
+            
+            // Обновить сводку после расчета остатка
+            updateSummary();
+        }
+
+        function updateNextDayStartBalance(currentDate, endBalance) {
+            // Вычислить следующую дату
+            const nextDate = new Date(currentDate);
+            nextDate.setDate(nextDate.getDate() + 1);
+            const nextDateStr = nextDate.toISOString().split('T')[0];
+            
+            // Обновить остаток на начало следующего дня
+            if (!allStoresData[currentStore].dailyData[nextDateStr]) {
+                allStoresData[currentStore].dailyData[nextDateStr] = {};
+            }
+            
+            allStoresData[currentStore].dailyData[nextDateStr].startBalance = endBalance.toFixed(2);
+            
+            // Обновить отображение в таблице, если следующий день видим
+            const nextDayRow = document.querySelector(`input[value="${nextDateStr}"]`);
+            if (nextDayRow) {
+                const nextDayStartBalanceCell = nextDayRow.closest('tr').querySelector('td:nth-child(2) input');
+                if (nextDayStartBalanceCell) {
+                    nextDayStartBalanceCell.value = endBalance.toFixed(2);
+                }
+            }
+        }
+
+        function updateSummary() {
+            const summary = document.getElementById('summary');
+            const today = new Date().toISOString().split('T')[0];
+            const storeData = allStoresData[currentStore];
+            
+            let totalIncome = 0;
+            let totalExpense = 0;
+            let totalWithdrawal = 0;
+            let currentBalance = storeData.initialBalance;
+
+            // Подсчитать суммы за текущий месяц
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+            
+            // Отладочная информация
+            console.log('Текущий месяц:', currentMonth, 'Текущий год:', currentYear);
+            console.log('Данные магазина:', storeData.dailyData);
+            
+            Object.keys(storeData.dailyData).forEach(date => {
+                const dateObj = new Date(date);
+                console.log('Проверяем дату:', date, 'Месяц:', dateObj.getMonth(), 'Год:', dateObj.getFullYear());
+                if (dateObj.getMonth() === currentMonth && dateObj.getFullYear() === currentYear) {
+                    const dayData = storeData.dailyData[date];
+                    const income = parseFloat(dayData.income) || 0;
+                    const expense = parseFloat(dayData.expense) || 0;
+                    const withdrawal = parseFloat(dayData.withdrawal) || 0;
+                    
+                    totalIncome += income;
+                    totalExpense += expense;
+                    totalWithdrawal += withdrawal;
+                    
+                    console.log('Добавляем данные за', date, ':', {income, expense, withdrawal});
+                }
+            });
+            
+            console.log('Итоговые суммы:', {
+                initialBalance: storeData.initialBalance,
+                totalIncome,
+                totalExpense,
+                totalWithdrawal,
+                calculatedBalance: storeData.initialBalance + totalIncome - totalExpense - totalWithdrawal
+            });
+
+            // Рассчитать текущий остаток: начальный + приход - расход - снятие
+            currentBalance = storeData.initialBalance + totalIncome - totalExpense - totalWithdrawal;
+            
+            // Если есть данные за текущий месяц, взять последний остаток
+            const sortedDates = Object.keys(storeData.dailyData).sort();
+            if (sortedDates.length > 0) {
+                const lastDate = sortedDates[sortedDates.length - 1];
+                const lastEndBalance = parseFloat(storeData.dailyData[lastDate].endBalance);
+                if (!isNaN(lastEndBalance)) {
+                    currentBalance = lastEndBalance;
+                }
+            }
+
+            const monthNames = [
+                'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+                'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
+            ];
+
+            summary.innerHTML = `
+                <h3>📊 Сводка за ${monthNames[currentMonth]} ${currentYear}</h3>
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <h4>Приход за месяц</h4>
+                        <div class="value positive">+${totalIncome.toFixed(2)} ₽</div>
+                    </div>
+                    <div class="summary-item">
+                        <h4>Расход за месяц</h4>
+                        <div class="value negative">-${totalExpense.toFixed(2)} ₽</div>
+                    </div>
+                    <div class="summary-item">
+                        <h4>Снятие за месяц</h4>
+                        <div class="value negative">-${totalWithdrawal.toFixed(2)} ₽</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function exportToExcel() {
+            // Проверка прав доступа - только менеджер и администратор
+            if (currentRole !== 'manager' && currentRole !== 'admin') {
+                alert('❌ У вас нет прав для экспорта данных. Только менеджер и администратор могут экспортировать данные.');
+                console.log('Попытка экспорта данных пользователем с ролью:', currentRole);
+                return;
+            }
+            
+            let csvContent = "data:text/csv;charset=utf-8,";
+            
+            // Заголовок
+            csvContent += "Салон,Дата,Остаток на начало дня,Приход,Источник прихода,Расход,Описание расхода,Снятие,Фамилия снимающего,Остаток на конец дня\n";
+            
+            // Данные
+            const storeData = allStoresData[currentStore];
+            const sortedDates = Object.keys(storeData.dailyData).sort();
+            
+            sortedDates.forEach(date => {
+                const dayData = storeData.dailyData[date];
+                if (dayData.startBalance || dayData.income || dayData.expense || dayData.withdrawal) {
+                    csvContent += `${getStoreName(currentStore)},${date},${dayData.startBalance || ''},${dayData.income || ''},"${dayData.incomeSource || ''}",${dayData.expense || ''},"${dayData.expenseDesc || ''}",${dayData.withdrawal || ''},"${dayData.withdrawer || ''}",${dayData.endBalance || ''}\n`;
+                }
+            });
+            
+            // Создать и скачать файл
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `кассовая_книга_${getStoreName(currentStore)}_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function logout() {
+            currentUser = null;
+            currentStore = null;
+            currentRole = null;
+            
+            localStorage.removeItem('currentUser');
+            
+            document.getElementById('loginSection').style.display = 'block';
+            document.getElementById('mainContent').style.display = 'none';
+            
+            // Очистить поля формы
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        function addEventListeners() {
+            // Добавить обработчики для автоматического расчета
+            const rows = document.querySelectorAll('#cashBookContent tbody tr');
+            rows.forEach((row, rowIndex) => {
+                const inputs = row.querySelectorAll('input[type="number"]:not([readonly])');
+                inputs.forEach(input => {
+                    input.addEventListener('blur', () => {
+                        const date = row.querySelector('input[type="date"]').value;
+                        calculateEndBalance(date);
+                    });
+                    
+                    // Также обновлять при изменении значения
+                    input.addEventListener('input', () => {
+                        const date = row.querySelector('input[type="date"]').value;
+                        setTimeout(() => calculateEndBalance(date), 100);
+                    });
+                });
+
+                // Добавить обработчики для textarea
+                const textareas = row.querySelectorAll('textarea');
+                textareas.forEach(textarea => {
+                    // Автоматическое изменение размера
+                    textarea.addEventListener('input', function() {
+                        this.style.height = 'auto';
+                        this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+                    });
+
+                    // Обновление tooltip при изменении
+                    textarea.addEventListener('input', function() {
+                        const tooltip = this.parentElement;
+                        tooltip.setAttribute('data-tooltip', this.value.replace(/"/g, '&quot;'));
+                    });
+                });
+            });
+        }
+
+        // Функции администратора
+        function addNewStore() {
+            const storeName = prompt('Введите название нового магазина:');
+            if (storeName) {
+                const storeId = 'store' + (Object.keys(allStoresData).length + 1);
+                allStoresData[storeId] = {
+                    initialBalance: 0,
+                    dailyData: {}
+                };
+                alert(`Магазин "${storeName}" добавлен с ID: ${storeId}`);
+            }
+        }
+
+        function viewAllStores() {
+            // Проверка прав доступа - менеджер и администратор
+            if (currentRole !== 'manager' && currentRole !== 'admin') {
+                alert('У вас нет прав для просмотра всех салонов');
+                return;
+            }
+            
+            let report = '📊 Отчет по всем салонам:\n\n';
+            
+            Object.keys(allStoresData).forEach(storeId => {
+                const storeData = allStoresData[storeId];
+                const totalIncome = Object.values(storeData.dailyData).reduce((sum, day) => sum + (parseFloat(day.income) || 0), 0);
+                const totalExpense = Object.values(storeData.dailyData).reduce((sum, day) => sum + (parseFloat(day.expense) || 0), 0);
+                const totalWithdrawal = Object.values(storeData.dailyData).reduce((sum, day) => sum + (parseFloat(day.withdrawal) || 0), 0);
+                
+                report += `${getStoreName(storeId)}:\n`;
+                report += `  Приход: ${totalIncome.toFixed(2)} ₽\n`;
+                report += `  Расход: ${totalExpense.toFixed(2)} ₽\n`;
+                report += `  Снятие: ${totalWithdrawal.toFixed(2)} ₽\n`;
+                report += `  Остаток: ${(totalIncome - totalExpense - totalWithdrawal).toFixed(2)} ₽\n\n`;
+            });
+            
+            alert(report);
+        }
+
+        function generateReport() {
+            // Проверка прав доступа - менеджер и администратор
+            if (currentRole !== 'manager' && currentRole !== 'admin') {
+                alert('У вас нет прав для генерации отчетов');
+                return;
+            }
+            
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Салон,Общий приход,Общий расход,Общее снятие,Текущий остаток\n";
+            
+            Object.keys(allStoresData).forEach(storeId => {
+                const storeData = allStoresData[storeId];
+                const totalIncome = Object.values(storeData.dailyData).reduce((sum, day) => sum + (parseFloat(day.income) || 0), 0);
+                const totalExpense = Object.values(storeData.dailyData).reduce((sum, day) => sum + (parseFloat(day.expense) || 0), 0);
+                const totalWithdrawal = Object.values(storeData.dailyData).reduce((sum, day) => sum + (parseFloat(day.withdrawal) || 0), 0);
+                const currentBalance = totalIncome - totalExpense - totalWithdrawal;
+                
+                csvContent += `${getStoreName(storeId)},${totalIncome.toFixed(2)},${totalExpense.toFixed(2)},${totalWithdrawal.toFixed(2)},${currentBalance.toFixed(2)}\n`;
+            });
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `общий_отчет_салонов_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function clearAllData() {
+            // Проверка прав доступа - только администратор
+            if (currentRole !== 'admin') {
+                alert('❌ У вас нет прав для выполнения этого действия. Только администратор может удалять все данные.');
+                console.log('Попытка удаления данных пользователем с ролью:', currentRole);
+                return;
+            }
+            
+            // Первое предупреждение
+            const firstConfirm = confirm('⚠️ ВНИМАНИЕ! Вы собираетесь удалить ВСЕ данные всех салонов!\n\nЭто действие:\n• Удалит все кассовые операции\n• Нельзя будет отменить\n• Потребует восстановления из резервной копии\n\nРекомендуется создать резервную копию перед удалением.\n\nПродолжить?');
+            
+            if (!firstConfirm) {
+                return;
+            }
+            
+            // Предложение создать резервную копию
+            const createBackup = confirm('💾 Хотите создать резервную копию перед удалением?\n\nРекомендуется для безопасности данных.');
+            
+            if (createBackup) {
+                try {
+                    // Здесь можно добавить логику создания резервной копии
+                    const backupData = JSON.stringify(allStoresData, null, 2);
+                    const blob = new Blob([backupData], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `резервная_копия_${new Date().toISOString().split('T')[0]}.json`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    
+                    alert('✅ Резервная копия создана и скачана.');
+                } catch (error) {
+                    alert('⚠️ Не удалось создать резервную копию: ' + error.message);
+                }
+            }
+            
+            // Второе подтверждение с вводом кода
+            const securityCode = prompt('🔒 Для подтверждения удаления введите код безопасности: "УДАЛИТЬ"');
+            
+            if (securityCode !== 'УДАЛИТЬ') {
+                alert('❌ Код безопасности неверный. Удаление отменено.');
+                return;
+            }
+            
+            // Финальное подтверждение
+            const finalConfirm = confirm('🚨 ПОСЛЕДНЕЕ ПРЕДУПРЕЖДЕНИЕ!\n\nВы действительно хотите удалить ВСЕ данные?\n\nНажмите "ОК" для удаления или "Отмена" для отмены.');
+            
+            if (!finalConfirm) {
+                alert('✅ Удаление отменено.');
+                return;
+            }
+            
+            // Выполнение удаления
+            try {
+                allStoresData = {};
+                initializeStoresData();
+                
+                // Обновить отображение
+                if (currentStore) {
+                    createCashBookTable();
+                    updateSummary();
+                }
+                
+                alert('🗑️ Все данные успешно удалены.\n\n⚠️ Рекомендуется создать резервную копию перед дальнейшей работой.');
+                
+            } catch (error) {
+                alert('❌ Ошибка при удалении данных: ' + error.message);
+            }
+        }
+
+        // Проверка авторизации при загрузке
+        window.onload = function() {
+            initializeStoresData();
+            
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                const userData = JSON.parse(savedUser);
+                currentUser = userData.username;
+                currentRole = userData.role;
+                currentStore = userData.store;
+                showMainContent();
+            }
+        };
+    </script>
+</body>
+</html>
